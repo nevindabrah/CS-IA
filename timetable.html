@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Timetable{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center">
+  <div class="row justify-content-center w-75">
+    <div class="col-md-12">
+      <div class="dashboard-container">
+        <h1 class="welcome-message">Timetable and Images</h1>
+      </div>
+      <br/>
+      <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="file">Choose file</label>
+          <input type="file" class="form-control" id="file" name="file">
+        </div>
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input type="text" class="form-control" id="title" name="title" placeholder="Enter title">
+        </div>
+        <br/>
+        <div class="d-flex justify-content-between align-items-center">
+          <button type="submit" class="btn btn-primary">Upload</button>
+        </div>
+      </form>
+      <br/>
+      {% if images %}
+        <h3 class="text-center">Your Images</h3>
+        <div class="row">
+          {% for image in images %}
+            <div class="col-md-4 text-center mb-3">
+              <img src="data:{{ image.mimetype }};base64,{{ image.img | b64encode }}" class="img-fluid timetable-img" alt="{{ image.name }}" data-id="{{ image.id }}" data-title="{{ image.title }}">
+              <h5>{{ image.title }}</h5>
+              <button class="btn btn-danger btn-sm mt-2 delete-image" data-id="{{ image.id }}">Delete</button>
+              <button class="btn btn-primary btn-sm mt-2 btn-edit replace-image" data-id="{{ image.id }}" data-title="{{ image.title }}" data-bs-toggle="modal" data-bs-target="#replaceImageModal">Replace</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Modal for viewing image -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="window.location.href='/timetable'"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="modalImage" src="" class="img-fluid" alt="Timetable Image">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for replacing image -->
+<div class="modal fade" id="replaceImageModal" tabindex="-1" aria-labelledby="replaceImageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="replaceImageModalLabel">Replace Timetable Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="window.location.href='/timetable'"></button>
+      </div>
+      <div class="modal-body">
+        <form id="replaceImageForm" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="replaceFile">Choose file</label>
+            <input type="file" class="form-control" id="replaceFile" name="file">
+          </div>
+          <input type="hidden" id="replaceImageId" name="image_id">
+          <br/>
+          <div class="d-flex justify-content-between align-items-center">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Handle image click to view in modal
+    document.querySelectorAll('.timetable-img').forEach(img => {
+      img.addEventListener('click', function() {
+        const src = this.src;
+        const title = this.getAttribute('data-title');
+        document.getElementById('modalImage').src = src;
+        document.getElementById('imageModalLabel').textContent = title;
+        const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+        imageModal.show();
+      });
+    });
+
+    // Handle image deletion
+    document.querySelectorAll('.delete-image').forEach(button => {
+      button.addEventListener('click', function() {
+        const imageId = this.getAttribute('data-id');
+        if (confirm('Are you sure you want to delete this image?')) {
+          fetch(`/delete-image/${imageId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ imageId: imageId })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert('Error deleting image');
+            }
+          })
+          .catch(error => console.error('Error:', error));
+        }
+      });
+    });
+
+    // Handle replace button click
+    document.querySelectorAll('.replace-image').forEach(button => {
+      button.addEventListener('click', function() {
+        const imageId = this.getAttribute('data-id');
+        const title = this.getAttribute('data-title');
+        document.getElementById('replaceImageId').value = imageId;
+        document.getElementById('replaceImageModalLabel').textContent = `Replace Image: ${title}`;
+      });
+    });
+
+    // Handle replace form submission
+    document.getElementById('replaceImageForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const formData = new FormData(this);
+      const imageId = formData.get('image_id');
+      fetch(`/edit-image/${imageId}`, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Error replacing image');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    });
+  });
+</script>
+{% endblock %}

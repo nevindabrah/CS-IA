@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container d-flex justify-content-center">
+    <div class="row justify-content-center w-75">
+      <div class="col-md-12">
+        <h3 class="text-center">Login</h3>
+        <form method="POST">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              class="form-control"
+              id="email"
+              name="email"
+              placeholder="example@gmail.com"
+            />
+          </div>
+        
+          <div class="form-group">
+            <label for="password1">Password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              placeholder="Enter Password"
+            />
+          </div>
+          
+          <br/>
+          <div class="d-flex justify-content-between align-items-center">
+            <button type="submit" class="btn btn-primary">Login</button>
+            <div class="d-flex align-items-center">
+              <span class="mr-2">Don't have an account?</span>
+              <a href="{{ url_for('auth.signup') }}" class="btn btn-primary ml-2">Sign Up</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

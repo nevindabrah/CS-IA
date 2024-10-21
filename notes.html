@@ -1,0 +1,47 @@
+{% extends "base.html" %} 
+{% block title %}Reflections and Notes{% endblock %} 
+{% block content %}
+
+  <br></br>
+  <h1 align="center" style="margin-bottom: 20px;">Reflections and Notes</h1>
+  <form method="POST" id="add-note-form">
+    <textarea name="note" id="note" class="form-control" rows="5" style="height: 100px;" placeholder="Type here"></textarea>
+    <br />
+    <div align="center">
+      <button type="submit" class="btn btn-primary">Add Reflection/Note</button>
+    </div>
+  </form>
+  <br>
+  <ul class="list-group list-group-flush" id="notes">
+    {% for note in user.notes|reverse %}
+    <li class="list-group-item" id="note-{{ note.id }}">
+      {% for line in note.data.split('\n') %}
+        {{ line }}<br>
+      {% endfor %}
+      <button type="button" class="close" onclick="deleteNote({{ note.id }})">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </li>
+    {% endfor %}
+  </ul>
+  <script>
+    function deleteNote(noteId) {
+      fetch('/delete-note', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ noteId: noteId })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById(`note-${noteId}`).remove();
+        } else {
+          alert('Error deleting note');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
+{% endblock %}
